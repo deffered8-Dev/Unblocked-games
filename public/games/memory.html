@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pair Match</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        background: #0b0d11;
+        color: #f1f5f9;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        user-select: none;
+      }
+      .shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 12px;
+        gap: 10px;
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      .hud {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #161920;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+      .metrics { display: flex; gap: 16px; font-variant-numeric: tabular-nums; }
+      .metric strong { color: #fbbf24; margin-left: 4px; }
+      button {
+        background: #f59e0b;
+        color: #0f172a;
+        border: 0;
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .stage {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        width: min(100%, 400px);
+      }
+      .card {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: #1c2029;
+        color: #f8fafc;
+        font-size: 28px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
+      }
+      .card:hover:not(.revealed):not(.matched) {
+        background: #252b36;
+        border-color: rgba(245,158,11,0.45);
+      }
+      .card.revealed {
+        background: #2b313e;
+        border-color: #f59e0b;
+      }
+      .card.matched {
+        background: #132a24;
+        border-color: #10b981;
+        color: #34d399;
+        cursor: default;
+      }
+      .status {
+        font-size: 13px;
+        color: #94a3b8;
+        min-height: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hud">
+        <div class="metrics">
+          <span class="metric">Moves<strong id="moves-val">0</strong></span>
+          <span class="metric">Pairs<strong id="pairs-val">0/8</strong></span>
+          <span class="metric">Time<strong id="time-val">0s</strong></span>
+        </div>
+        <button type="button" id="restart-btn">New Board</button>
+      </div>
+
+      <div class="stage">
+        <div id="board" class="board"></div>
+        <p id="status" class="status">Flip two cards to find all 8 matching geometric pairs.</p>
+      </div>
+    </div>
+
+    <script>
+      const SYMBOLS = ['◆', '●', '▲', '■', '★', '✦', '✚', '⬟'];
+      const boardEl = document.getElementById('board');
+      const movesEl = document.getElementById('moves-val');
+      const pairsEl = document.getElementById('pairs-val');
+      const timeEl = document.getElementById('time-val');
+      const statusEl = document.getElementById('status');
+      const restartBtn = document.getElementById('restart-btn');
+
+      let deck = [];
+      let flipped = [];
+      let locked = false;
+      let moves = 0;
+      let matchedCount = 0;
+      let seconds = 0;
+      let timerId = null;
+
+      function startTimer() {
+        if (timerId) return;
+        timerId = setInterval(() => {
+          seconds++;
+          timeEl.textContent = `${seconds}s`;
+        }, 1000);
+      }
+
+      function stopTimer() {
+        clearInterval(timerId);
+        timerId = null;
+      }
+
+      function initGame() {
+        stopTimer();
+        seconds = 0;
+        moves = 0;
+        matchedCount = 0;
+        flipped = [];
+        locked = false;
+        timeEl.textContent = '0s';
+        movesEl.textContent = '0';
+        pairsEl.textContent = '0/8';
+        statusEl.textContent = 'Flip two cards to find all 8 matching geometric pairs.';
+        statusEl.style.color = '#94a3b8';
+
+        const pairs = [...SYMBOLS, ...SYMBOLS];
+        for (let i = pairs.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+        }
+
+        deck = pairs.map((symbol, idx) => ({
+          id: idx,
+          symbol,
+          revealed: false,
+          matched: false,
+        }));
+        render();
+      }
+
+      function handleCardClick(card) {
+        if (locked || card.revealed || card.matched) return;
+        startTimer();
+        card.revealed = true;
+        flipped.push(card);
+        render();
+
+        if (flipped.length === 2) {
+          moves++;
+          movesEl.textContent = String(moves);
+          const [a, b] = flipped;
+          if (a.symbol === b.symbol) {
+            a.matched = true;
+            b.matched = true;
+            matchedCount++;
+            pairsEl.textContent = `${matchedCount}/8`;
+            flipped = [];
+            render();
+            if (matchedCount === 8) {
+              stopTimer();
+              statusEl.textContent = `Board cleared in ${moves} moves and ${seconds}s!`;
+              statusEl.style.color = '#34d399';
+            }
+          } else {
+            locked = true;
+            setTimeout(() => {
+              a.revealed = false;
+              b.revealed = false;
+              flipped = [];
+              locked = false;
+              render();
+            }, 620);
+          }
+        }
+      }
+
+      function render() {
+        boardEl.innerHTML = '';
+        deck.forEach((card) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'card';
+          if (card.matched) {
+            btn.classList.add('matched');
+            btn.textContent = card.symbol;
+          } else if (card.revealed) {
+            btn.classList.add('revealed');
+            btn.textContent = card.symbol;
+          } else {
+            btn.textContent = '·';
+            btn.style.color = '#475569';
+          }
+          btn.addEventListener('click', () => handleCardClick(card));
+          boardEl.appendChild(btn);
+        });
+      }
+
+      restartBtn.addEventListener('click', initGame);
+      initGame();
+    </script>
+  </body>
+</html>

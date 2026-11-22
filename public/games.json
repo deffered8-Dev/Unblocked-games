@@ -1,0 +1,101 @@
+[
+  {
+    "id": "slope-run",
+    "title": "Slope Run",
+    "category": "Arcade",
+    "description": "Steer a high-speed sphere down an endless 3D slope track, hit boost pads, jump gaps, and dodge coral hazard blocks.",
+    "controls": "A/D, Left/Right arrows, or Touch",
+    "players": "1 Player",
+    "featured": true,
+    "thumbnail": "/src/assets/images/cover_slope_run_1795318656730.jpg",
+    "iframe": "<iframe src=\"/games/slope.html\" title=\"Slope Run\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "grid-snake",
+    "title": "Grid Snake",
+    "category": "Arcade",
+    "description": "Steer the growing geometric serpent across the board, collect golden orbs, and beat your longest streak.",
+    "controls": "Arrow keys or WASD",
+    "players": "1 Player",
+    "featured": true,
+    "thumbnail": "/src/assets/images/cover_grid_snake_1795318302916.jpg",
+    "iframe": "<iframe src=\"/games/snake.html\" title=\"Grid Snake\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "brick-breaker",
+    "title": "Brick Breaker",
+    "category": "Action",
+    "description": "Deflect the steel sphere off your paddle to shatter layered brick formations before your lives run out.",
+    "controls": "Mouse or Left/Right arrows",
+    "players": "1 Player",
+    "featured": true,
+    "thumbnail": "/src/assets/images/cover_brick_breaker_1795318303160.jpg",
+    "iframe": "<iframe src=\"/games/breakout.html\" title=\"Brick Breaker\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "block-stack",
+    "title": "Block Stack",
+    "category": "Puzzle",
+    "description": "Rotate and drop falling tetrominoes to clear horizontal lines with ghost placement preview and hard drop.",
+    "controls": "Arrows to move/rotate, Space to drop",
+    "players": "1 Player",
+    "featured": true,
+    "thumbnail": "/src/assets/images/cover_block_stack_1795318302726.jpg",
+    "iframe": "<iframe src=\"/games/tetris.html\" title=\"Block Stack\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "sky-hopper",
+    "title": "Sky Hopper",
+    "category": "Arcade",
+    "description": "Thread a paper glider through dusk monolith gaps with single-tap lift physics and crisp medal milestones.",
+    "controls": "Space, Click, or Tap",
+    "players": "1 Player",
+    "featured": true,
+    "thumbnail": "/src/assets/images/cover_sky_hopper_1795318303542.jpg",
+    "iframe": "<iframe src=\"/games/flappy.html\" title=\"Sky Hopper\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "tile-2048",
+    "title": "Tile 2048",
+    "category": "Puzzle",
+    "description": "Slide numbered tiles across a 4x4 grid, merge matching powers of two, and reach the 2048 tile.",
+    "controls": "Arrow keys, WASD, or Swipe",
+    "players": "1 Player",
+    "featured": false,
+    "thumbnail": "",
+    "iframe": "<iframe src=\"/games/2048.html\" title=\"Tile 2048\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "mine-grid",
+    "title": "Mine Grid",
+    "category": "Strategy",
+    "description": "Deduce hidden mine coordinates from adjacent cell counts with safe first-click generation and flag mode.",
+    "controls": "Click to reveal, Right-click to flag",
+    "players": "1 Player",
+    "featured": false,
+    "thumbnail": "",
+    "iframe": "<iframe src=\"/games/minesweeper.html\" title=\"Mine Grid\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "paddle-duel",
+    "title": "Paddle Duel",
+    "category": "Sports",
+    "description": "Fast table-tennis rally against an adaptive opponent or a second local player on the same keyboard.",
+    "controls": "W/S or Up/Down arrows",
+    "players": "1–2 Players",
+    "featured": false,
+    "thumbnail": "",
+    "iframe": "<iframe src=\"/games/pong.html\" title=\"Paddle Duel\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  },
+  {
+    "id": "pair-match",
+    "title": "Pair Match",
+    "category": "Puzzle",
+    "description": "Flip geometric symbol cards to clear the board in the fewest moves and fastest time.",
+    "controls": "Mouse click or Tap",
+    "players": "1 Player",
+    "featured": false,
+    "thumbnail": "",
+    "iframe": "<iframe src=\"/games/memory.html\" title=\"Pair Match\" allow=\"fullscreen\" loading=\"lazy\"></iframe>"
+  }
+]

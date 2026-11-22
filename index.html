@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recess Arcade — Unblocked Browser Games</title>
+    <meta
+      name="description"
+      content="Unblocked browser game library storing each playable game as an iframe entry in a JSON registry."
+    />
+    <meta property="og:title" content="Recess Arcade — Unblocked Browser Games" />
+    <meta
+      property="og:description"
+      content="Unblocked browser game library storing each playable game as an iframe entry in a JSON registry."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="min-h-screen bg-[#111318] text-slate-100 antialiased selection:bg-amber-500/30 selection:text-amber-100">
+    <!-- Top Bar Contract: 3 zones separated by gap-8 -->
+    <header class="sticky top-0 z-30 border-b border-white/10 bg-[#111318]/95 backdrop-blur-md">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-8 px-4 py-3.5 sm:px-6 lg:px-8">
+        <!-- Zone 1: Brand wordmark -->
+        <a
+          href="#top"
+          id="brand-home"
+          class="font-display text-lg font-bold tracking-tight text-slate-50 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400"
+        >
+          Recess Arcade
+        </a>
+
+        <!-- Zone 2: Concise single-line nav links -->
+        <nav aria-label="Primary navigation" class="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
+          <a
+            href="#featured"
+            class="hover:text-white hover:underline underline-offset-4 decoration-amber-400/80 transition-colors whitespace-nowrap shrink-0"
+          >
+            Featured
+          </a>
+          <a
+            href="#catalog"
+            class="hover:text-white hover:underline underline-offset-4 decoration-amber-400/80 transition-colors whitespace-nowrap shrink-0"
+          >
+            All Games
+          </a>
+          <button
+            type="button"
+            id="nav-favorites-btn"
+            class="hover:text-white hover:underline underline-offset-4 decoration-amber-400/80 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            Favorites
+          </button>
+          <a
+            href="#json-registry"
+            class="hover:text-white hover:underline underline-offset-4 decoration-amber-400/80 transition-colors whitespace-nowrap shrink-0"
+          >
+            JSON Registry
+          </a>
+        </nav>
+
+        <!-- Zone 3: 1 primary action -->
+        <div class="flex items-center shrink-0">
+          <button
+            type="button"
+            id="random-game-btn"
+            class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-400 active:translate-y-px whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+          >
+            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+            <span>Random Game</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Active Game Stage (hidden until user launches a game) -->
+      <section
+        id="player-section"
+        class="mb-12 hidden rounded-xl border border-white/10 bg-[#1A1D24] p-4 sm:p-6"
+        aria-label="Active game stage"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 text-xs text-slate-400">
+              <span id="player-category">Arcade</span>
+              <span aria-hidden="true">·</span>
+              <span id="player-controls" class="truncate">Arrow keys to play</span>
+            </div>
+            <h2 id="player-title" class="mt-1 font-display text-2xl font-bold tracking-tight text-slate-50 truncate">
+              Game Title
+            </h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              id="player-favorite-btn"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#232730] px-3.5 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-[#2C313C] whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <svg id="player-favorite-icon" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span id="player-favorite-label">Favorite</span>
+            </button>
+
+            <button
+              type="button"
+              id="player-restart-btn"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#232730] px-3.5 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-[#2C313C] whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              <span>Restart</span>
+            </button>
+
+            <button
+              type="button"
+              id="player-inspect-btn"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#232730] px-3.5 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-[#2C313C] whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <span>Inspect Iframe</span>
+            </button>
+
+            <button
+              type="button"
+              id="player-fullscreen-btn"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-amber-400 whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" y1="3" x2="14" y2="10"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              <span>Fullscreen</span>
+            </button>
+
+            <button
+              type="button"
+              id="player-close-btn"
+              aria-label="Close game stage"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#232730] px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-[#2C313C] hover:text-white whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <span>Close</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Iframe Mount Container -->
+        <div
+          id="iframe-stage"
+          class="relative mt-4 overflow-hidden rounded-lg border border-white/10 bg-[#0B0D11]"
+        >
+          <div id="iframe-mount" class="aspect-video w-full min-h-[420px] sm:min-h-[520px]"></div>
+        </div>
+
+        <!-- Inline Iframe JSON Inspector Drawer -->
+        <div
+          id="player-json-drawer"
+          class="mt-4 hidden rounded-lg border border-white/10 bg-[#111318] p-4"
+        >
+          <div class="flex items-center justify-between gap-4 pb-2">
+            <span class="text-xs font-medium text-slate-300">Active entry from <code class="font-mono text-amber-400">games.json</code></span>
+            <button
+              type="button"
+              id="copy-entry-json-btn"
+              class="rounded-md border border-white/10 bg-[#1A1D24] px-2.5 py-1 text-xs font-medium text-slate-200 hover:bg-[#232730] cursor-pointer"
+            >
+              Copy JSON
+            </button>
+          </div>
+          <pre id="player-json-code" class="overflow-x-auto font-mono text-xs leading-relaxed text-slate-300"></pre>
+        </div>
+      </section>
+
+      <!-- Hero Section: 2-Column Balanced Split -->
+      <section id="featured" class="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12">
+        <div class="flex flex-col justify-between rounded-xl border border-white/10 bg-[#1A1D24] p-6 sm:p-8 lg:col-span-6">
+          <div>
+            <p class="text-xs font-medium text-amber-400">
+              HTML · JavaScript · CSS · Iframe JSON
+            </p>
+            <h1 class="mt-3 font-display text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl lg:text-5xl text-balance leading-[1.12]">
+              Instant browser games stored cleanly in one JSON file.
+            </h1>
+            <p class="mt-4 max-w-xl text-base leading-relaxed text-slate-300">
+              Every arcade, puzzle, and strategy title loads inside an isolated iframe defined in
+              <code class="font-mono text-sm text-amber-300">games.json</code>. Zero logins, zero installs, and zero tracking.
+            </p>
+          </div>
+
+          <div class="mt-8 flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              id="hero-play-featured-btn"
+              class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-400 whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <span>Play Slope Run</span>
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </button>
+            <a
+              href="#json-registry"
+              class="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-[#232730] px-5 py-2.5 text-sm font-medium text-slate-100 transition-colors hover:bg-[#2C313C] whitespace-nowrap shrink-0"
+            >
+              Add Iframe Game
+            </a>
+          </div>
+        </div>
+
+        <div class="relative min-h-[280px] overflow-hidden rounded-xl border border-white/10 bg-[#1A1D24] lg:col-span-6">
+          <img
+            src="/src/assets/images/arcade_hero_cabinet_1795318303544.jpg"
+            alt="Minimalist dark slate and warm amber arcade gaming table"
+            referrerPolicy="no-referrer"
+            class="h-full w-full object-cover"
+            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+          />
+          <div class="hidden h-full w-full flex-col items-center justify-center bg-gradient-to-br from-[#1A1D24] to-[#111318] p-8 text-center">
+            <span class="font-display text-xl font-bold text-slate-100">Recess Arcade</span>
+            <span class="mt-1 text-sm text-slate-400">Ready to play in your browser</span>
+          </div>
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#111318]/85 via-[#111318]/20 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">
+            <div>
+              <p class="text-xs text-slate-300">Featured Cabinet</p>
+              <p class="mt-0.5 font-display text-lg font-bold text-white">9 Local HTML5 Classics</p>
+            </div>
+            <span class="font-mono text-xs tabular-nums text-amber-300">games.json</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Summary Row below hero split -->
+      <section class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4" aria-label="Library overview">
+        <div class="rounded-xl border border-white/10 bg-[#1A1D24] px-5 py-4">
+          <p class="text-xs text-slate-400">Registered Games</p>
+          <p id="stat-total-games" class="mt-1 font-mono text-2xl font-medium tabular-nums text-slate-50">9</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-[#1A1D24] px-5 py-4">
+          <p class="text-xs text-slate-400">Categories</p>
+          <p id="stat-total-categories" class="mt-1 font-mono text-2xl font-medium tabular-nums text-slate-50">4</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-[#1A1D24] px-5 py-4">
+          <p class="text-xs text-slate-400">Saved Favorites</p>
+          <p id="stat-total-favorites" class="mt-1 font-mono text-2xl font-medium tabular-nums text-slate-50">0</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-[#1A1D24] px-5 py-4">
+          <p class="text-xs text-slate-400">Custom Iframes</p>
+          <p id="stat-total-custom" class="mt-1 font-mono text-2xl font-medium tabular-nums text-slate-50">0</p>
+        </div>
+      </section>
+
+      <!-- Game Catalog & Filter Toolbar -->
+      <section id="catalog" class="mt-12">
+        <div class="flex flex-col gap-4 border-b border-white/10 pb-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 class="font-display text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">
+              Game Library
+            </h2>
+            <p class="mt-1 text-sm text-slate-400">
+              Select any card to load its iframe inside the game stage above.
+            </p>
+          </div>
+
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <!-- Search Input -->
+            <div class="relative">
+              <svg
+                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="search"
+                id="search-input"
+                placeholder="Search games..."
+                aria-label="Search games"
+                class="w-full rounded-lg border border-white/10 bg-[#1A1D24] py-2 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-amber-400 focus:outline-none sm:w-56"
+              />
+            </div>
+
+            <!-- Interactive Category Tabs -->
+            <div
+              id="category-tabs"
+              role="tablist"
+              aria-label="Filter games by category"
+              class="flex flex-wrap items-center gap-1 rounded-lg border border-white/10 bg-[#1A1D24] p-1"
+            >
+              <!-- Populated dynamically from games.json -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Recently Played Strip (rendered dynamically when history exists) -->
+        <div id="recent-strip" class="mt-6 hidden">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-200">Recently Played</h3>
+            <button
+              type="button"
+              id="clear-recent-btn"
+              class="text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
+            >
+              Clear history
+            </button>
+          </div>
+          <div id="recent-list" class="mt-3 flex flex-wrap gap-3"></div>
+        </div>
+
+        <!-- Loading / Error / Empty States -->
+        <div id="catalog-status" class="mt-8 hidden rounded-xl border border-white/10 bg-[#1A1D24] p-10 text-center">
+          <p id="catalog-status-title" class="font-display text-lg font-semibold text-slate-100"></p>
+          <p id="catalog-status-body" class="mt-1 text-sm text-slate-400"></p>
+          <button
+            type="button"
+            id="reset-filters-btn"
+            class="mt-4 hidden rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-400 cursor-pointer"
+          >
+            Show All Games
+          </button>
+        </div>
+
+        <!-- Responsive Game Cards Grid -->
+        <div
+          id="games-grid"
+          class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        ></div>
+      </section>
+
+      <!-- Iframe JSON Registry & Custom Game Adder -->
+      <section id="json-registry" class="mt-16 border-t border-white/10 pt-12">
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <!-- Left: Add Game as Iframe to Registry -->
+          <div class="rounded-xl border border-white/10 bg-[#1A1D24] p-6 lg:col-span-5">
+            <h2 class="font-display text-2xl font-bold tracking-tight text-slate-50">
+              Add Game to JSON Registry
+            </h2>
+            <p class="mt-2 text-sm leading-relaxed text-slate-400">
+              Each game is stored as an <code class="font-mono text-amber-300">&lt;iframe&gt;</code> entry in
+              <code class="font-mono text-amber-300">games.json</code>. Paste a game URL or full iframe embed tag below to test it live and export an updated JSON file.
+            </p>
+
+            <form id="add-game-form" class="mt-6 space-y-4">
+              <div>
+                <label for="game-title-input" class="block text-xs font-medium text-slate-300">
+                  Game Title
+                </label>
+                <input
+                  id="game-title-input"
+                  type="text"
+                  required
+                  placeholder="e.g. Slope Run"
+                  class="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="game-category-input" class="block text-xs font-medium text-slate-300">
+                    Category
+                  </label>
+                  <select
+                    id="game-category-input"
+                    class="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="Arcade">Arcade</option>
+                    <option value="Puzzle">Puzzle</option>
+                    <option value="Action">Action</option>
+                    <option value="Strategy">Strategy</option>
+                    <option value="Sports">Sports</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="game-controls-input" class="block text-xs font-medium text-slate-300">
+                    Controls Hint
+                  </label>
+                  <input
+                    id="game-controls-input"
+                    type="text"
+                    placeholder="Arrow keys / Mouse"
+                    class="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label for="game-iframe-input" class="block text-xs font-medium text-slate-300">
+                  Iframe HTML or Game URL
+                </label>
+                <textarea
+                  id="game-iframe-input"
+                  rows="3"
+                  required
+                  placeholder='<iframe src="/games/snake.html" title="My Game" allowfullscreen></iframe>'
+                  class="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
+                ></textarea>
+              </div>
+
+              <p id="form-feedback" class="hidden text-xs"></p>
+
+              <div class="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="submit"
+                  class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-400 whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Save &amp; Add Game
+                </button>
+                <button
+                  type="button"
+                  id="clear-custom-btn"
+                  class="rounded-lg border border-white/10 bg-[#232730] px-4 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-[#2C313C] whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Clear Custom Games
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right: Live games.json Inspector & Export -->
+          <div class="flex flex-col rounded-xl border border-white/10 bg-[#1A1D24] p-6 lg:col-span-7">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <h3 class="font-display text-lg font-bold text-slate-50">
+                  Live <code class="font-mono text-amber-400">games.json</code> Preview
+                </h3>
+                <p class="mt-0.5 text-xs text-slate-400">
+                  Static JSON schema storing each game's embed iframe tag and metadata.
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="copy-all-json-btn"
+                  class="rounded-lg border border-white/10 bg-[#232730] px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-[#2C313C] whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Copy JSON
+                </button>
+                <button
+                  type="button"
+                  id="download-json-btn"
+                  class="rounded-lg border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-500/25 whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Download games.json
+                </button>
+              </div>
+            </div>
+
+            <pre
+              id="registry-json-preview"
+              class="mt-4 max-h-[380px] flex-1 overflow-auto rounded-lg border border-white/10 bg-[#111318] p-4 font-mono text-xs leading-relaxed text-slate-300"
+            ></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Quiet Footer -->
+    <footer class="mt-16 border-t border-white/10 py-8">
+      <div class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 text-xs text-slate-400 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+        <p>Recess Arcade · Pure HTML, JavaScript, CSS &amp; JSON Iframe Registry</p>
+        <div class="flex items-center gap-6">
+          <a href="#featured" class="hover:text-slate-200 transition-colors">Featured</a>
+          <a href="#catalog" class="hover:text-slate-200 transition-colors">All Games</a>
+          <a href="#json-registry" class="hover:text-slate-200 transition-colors">JSON Registry</a>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/js/main.js"></script>
+  </body>
+</html>

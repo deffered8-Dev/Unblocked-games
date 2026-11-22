@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tile 2048</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        background: #0b0d11;
+        color: #f1f5f9;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        user-select: none;
+      }
+      .shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 12px;
+        gap: 10px;
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      .hud {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #161920;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+      .metrics { display: flex; gap: 16px; font-variant-numeric: tabular-nums; }
+      .metric strong { color: #fbbf24; margin-left: 4px; }
+      button {
+        background: #232730;
+        color: #e2e8f0;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.primary { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
+      .stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .grid-box {
+        width: min(100%, 380px);
+        aspect-ratio: 1;
+        background: #161920;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .tile {
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 24px;
+        font-variant-numeric: tabular-nums;
+        background: #232730;
+        color: #94a3b8;
+        transition: transform 120ms ease, background-color 120ms ease;
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(11,13,17,0.86);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        gap: 12px;
+      }
+      .overlay.hidden { display: none; }
+      .hint { text-align: center; font-size: 12px; color: #64748b; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hud">
+        <div class="metrics">
+          <span class="metric">Score<strong id="score-val">0</strong></span>
+          <span class="metric">Best<strong id="best-val">0</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="undo-btn">Undo</button>
+          <button type="button" id="new-btn" class="primary">New Game</button>
+        </div>
+      </div>
+
+      <div class="stage" id="swipe-zone">
+        <div class="grid-box" id="grid"></div>
+        <div id="overlay" class="overlay hidden">
+          <h2 id="overlay-title">No Moves Left</h2>
+          <p id="overlay-desc" style="color:#94a3b8;font-size:14px;"></p>
+          <button type="button" id="retry-btn" class="primary">Play Again</button>
+        </div>
+      </div>
+
+      <p class="hint">Use Arrow keys, WASD, or swipe on touch devices to merge tiles.</p>
+    </div>
+
+    <script>
+      const gridEl = document.getElementById('grid');
+      const scoreEl = document.getElementById('score-val');
+      const bestEl = document.getElementById('best-val');
+      const overlay = document.getElementById('overlay');
+      const overlayTitle = document.getElementById('overlay-title');
+      const overlayDesc = document.getElementById('overlay-desc');
+      const newBtn = document.getElementById('new-btn');
+      const retryBtn = document.getElementById('retry-btn');
+      const undoBtn = document.getElementById('undo-btn');
+
+      const BEST_KEY = 'recess_2048_best';
+      let best = Number(localStorage.getItem(BEST_KEY) || 0);
+      bestEl.textContent = best;
+
+      const COLORS = {
+        0: ['#232730', 'transparent'],
+        2: ['#334155', '#f8fafc'],
+        4: ['#475569', '#f8fafc'],
+        8: ['#b45309', '#fffbeb'],
+        16: ['#d97706', '#fffbeb'],
+        32: ['#ea580c', '#fffbeb'],
+        64: ['#dc2626', '#fffbeb'],
+        128: ['#f59e0b', '#0f172a'],
+        256: ['#fbbf24', '#0f172a'],
+        512: ['#10b981', '#0f172a'],
+        1024: ['#38bdf8', '#0f172a'],
+        2048: ['#fde047', '#0f172a'],
+      };
+
+      let board = [];
+      let prevState = null;
+      let score = 0;
+      let wonShown = false;
+
+      function initBoard() {
+        board = Array.from({ length: 4 }, () => Array(4).fill(0));
+        prevState = null;
+        score = 0;
+        wonShown = false;
+        overlay.classList.add('hidden');
+        addRandomTile();
+        addRandomTile();
+        render();
+      }
+
+      function addRandomTile() {
+        const empty = [];
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (board[r][c] === 0) empty.push([r, c]);
+          }
+        }
+        if (empty.length === 0) return;
+        const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+        board[r][c] = Math.random() < 0.9 ? 2 : 4;
+      }
+
+      function slideLine(line) {
+        const nonZero = line.filter((v) => v !== 0);
+        let gained = 0;
+        const merged = [];
+        for (let i = 0; i < nonZero.length; i++) {
+          if (i + 1 < nonZero.length && nonZero[i] === nonZero[i + 1]) {
+            const val = nonZero[i] * 2;
+            merged.push(val);
+            gained += val;
+            i++;
+          } else {
+            merged.push(nonZero[i]);
+          }
+        }
+        while (merged.length < 4) merged.push(0);
+        return { line: merged, gained };
+      }
+
+      function move(dir) {
+        const snapshot = {
+          board: board.map((r) => [...r]),
+          score,
+        };
+        let moved = false;
+        let gainedTotal = 0;
+
+        if (dir === 'left' || dir === 'right') {
+          for (let r = 0; r < 4; r++) {
+            const row = dir === 'right' ? [...board[r]].reverse() : [...board[r]];
+            const { line, gained } = slideLine(row);
+            const finalRow = dir === 'right' ? line.reverse() : line;
+            if (finalRow.some((v, idx) => v !== board[r][idx])) moved = true;
+            board[r] = finalRow;
+            gainedTotal += gained;
+          }
+        } else {
+          for (let c = 0; c < 4; c++) {
+            const col = [board[0][c], board[1][c], board[2][c], board[3][c]];
+            const oriented = dir === 'down' ? [...col].reverse() : col;
+            const { line, gained } = slideLine(oriented);
+            const finalCol = dir === 'down' ? line.reverse() : line;
+            for (let r = 0; r < 4; r++) {
+              if (board[r][c] !== finalCol[r]) moved = true;
+              board[r][c] = finalCol[r];
+            }
+            gainedTotal += gained;
+          }
+        }
+
+        if (!moved) return;
+        prevState = snapshot;
+        score += gainedTotal;
+        if (score > best) {
+          best = score;
+          localStorage.setItem(BEST_KEY, String(best));
+        }
+        addRandomTile();
+        render();
+        checkStatus();
+      }
+
+      function hasMoves() {
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (board[r][c] === 0) return true;
+            if (c < 3 && board[r][c] === board[r][c + 1]) return true;
+            if (r < 3 && board[r][c] === board[r + 1][c]) return true;
+          }
+        }
+        return false;
+      }
+
+      function checkStatus() {
+        if (!wonShown && board.some((r) => r.includes(2048))) {
+          wonShown = true;
+          overlayTitle.textContent = '2048 Reached!';
+          overlayDesc.textContent = `Score: ${score}. You can start a new board or keep merging.`;
+          retryBtn.textContent = 'Continue';
+          overlay.classList.remove('hidden');
+          return;
+        }
+        if (!hasMoves()) {
+          overlayTitle.textContent = 'Game Over';
+          overlayDesc.textContent = `Final Score: ${score} · Best: ${best}`;
+          retryBtn.textContent = 'Play Again';
+          overlay.classList.remove('hidden');
+        }
+      }
+
+      function render() {
+        scoreEl.textContent = String(score);
+        bestEl.textContent = String(best);
+        gridEl.innerHTML = '';
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            const val = board[r][c];
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            const [bg, fg] = COLORS[val] || ['#fde047', '#0f172a'];
+            tile.style.background = bg;
+            tile.style.color = fg;
+            tile.style.fontSize = val >= 1024 ? '18px' : val >= 128 ? '21px' : '24px';
+            tile.textContent = val === 0 ? '' : String(val);
+            gridEl.appendChild(tile);
+          }
+        }
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'a') move('left');
+        else if (e.key === 'ArrowRight' || e.key === 'd') move('right');
+        else if (e.key === 'ArrowUp' || e.key === 'w') move('up');
+        else if (e.key === 'ArrowDown' || e.key === 's') move('down');
+      });
+
+      let touchStart = null;
+      const swipeZone = document.getElementById('swipe-zone');
+      swipeZone.addEventListener('touchstart', (e) => {
+        if (e.touches[0]) {
+          touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      }, { passive: true });
+      swipeZone.addEventListener('touchend', (e) => {
+        if (!touchStart || !e.changedTouches[0]) return;
+        const dx = e.changedTouches[0].clientX - touchStart.x;
+        const dy = e.changedTouches[0].clientY - touchStart.y;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+        if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
+        else move(dy > 0 ? 'down' : 'up');
+        touchStart = null;
+      }, { passive: true });
+
+      undoBtn.addEventListener('click', () => {
+        if (!prevState) return;
+        board = prevState.board;
+        score = prevState.score;
+        prevState = null;
+        overlay.classList.add('hidden');
+        render();
+      });
+
+      newBtn.addEventListener('click', initBoard);
+      retryBtn.addEventListener('click', () => {
+        if (retryBtn.textContent === 'Continue') {
+          overlay.classList.add('hidden');
+        } else {
+          initBoard();
+        }
+      });
+
+      initBoard();
+    </script>
+  </body>
+</html>

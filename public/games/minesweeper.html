@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mine Grid</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        background: #0b0d11;
+        color: #f1f5f9;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        user-select: none;
+      }
+      .shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 12px;
+        gap: 10px;
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      .hud {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        background: #161920;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+      .metrics { display: flex; gap: 14px; font-variant-numeric: tabular-nums; }
+      .metric strong { color: #fbbf24; margin-left: 4px; }
+      .actions { display: flex; gap: 8px; }
+      button {
+        background: #232730;
+        color: #e2e8f0;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 7px;
+        padding: 6px 11px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.active { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
+      .stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 4px;
+        background: #161920;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 10px;
+        width: min(100%, 396px);
+      }
+      .cell {
+        aspect-ratio: 1;
+        border: 0;
+        border-radius: 5px;
+        background: #2b313d;
+        color: #f8fafc;
+        font-size: 15px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .cell:hover:not(.open) { background: #384050; }
+      .cell.open { background: #14171e; }
+      .cell.mine { background: #991b1b; }
+      .status-banner {
+        font-size: 13px;
+        color: #94a3b8;
+        min-height: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hud">
+        <div class="metrics">
+          <span class="metric">Mines<strong id="mines-left">10</strong></span>
+          <span class="metric">Time<strong id="timer-val">0s</strong></span>
+        </div>
+        <div class="actions">
+          <button type="button" id="flag-mode-btn">Flag Mode: Off</button>
+          <button type="button" id="reset-btn" class="active">New Grid</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div id="board" class="board" aria-label="Minesweeper grid"></div>
+        <p id="status-banner" class="status-banner">Left-click to reveal · Right-click or toggle Flag Mode to mark mines.</p>
+      </div>
+    </div>
+
+    <script>
+      const SIZE = 9;
+      const MINES = 10;
+      const NUM_COLORS = ['', '#60a5fa', '#34d399', '#f87171', '#a78bfa', '#fb923c', '#2dd4bf', '#e2e8f0', '#94a3b8'];
+
+      const boardEl = document.getElementById('board');
+      const minesLeftEl = document.getElementById('mines-left');
+      const timerEl = document.getElementById('timer-val');
+      const flagBtn = document.getElementById('flag-mode-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const bannerEl = document.getElementById('status-banner');
+
+      let grid = [];
+      let generated = false;
+      let gameOver = false;
+      let flagMode = false;
+      let seconds = 0;
+      let timerId = null;
+
+      function startTimer() {
+        if (timerId) return;
+        timerId = setInterval(() => {
+          seconds++;
+          timerEl.textContent = `${seconds}s`;
+        }, 1000);
+      }
+
+      function stopTimer() {
+        clearInterval(timerId);
+        timerId = null;
+      }
+
+      function initGame() {
+        stopTimer();
+        seconds = 0;
+        timerEl.textContent = '0s';
+        generated = false;
+        gameOver = false;
+        bannerEl.textContent = 'Left-click to reveal · Right-click or toggle Flag Mode to mark mines.';
+        bannerEl.style.color = '#94a3b8';
+
+        grid = Array.from({ length: SIZE }, (_, r) =>
+          Array.from({ length: SIZE }, (_, c) => ({
+            r,
+            c,
+            mine: false,
+            open: false,
+            flagged: false,
+            count: 0,
+          }))
+        );
+        render();
+      }
+
+      function placeMines(safeR, safeC) {
+        let placed = 0;
+        while (placed < MINES) {
+          const r = Math.floor(Math.random() * SIZE);
+          const c = Math.floor(Math.random() * SIZE);
+          if (grid[r][c].mine) continue;
+          if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+          grid[r][c].mine = true;
+          placed++;
+        }
+
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (grid[r][c].mine) continue;
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+              for (let dc = -1; dc <= 1; dc++) {
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc].mine) {
+                  count++;
+                }
+              }
+            }
+            grid[r][c].count = count;
+          }
+        }
+        generated = true;
+        startTimer();
+      }
+
+      function reveal(r, c) {
+        if (gameOver) return;
+        const cell = grid[r][c];
+        if (cell.open || cell.flagged) return;
+
+        if (!generated) placeMines(r, c);
+
+        cell.open = true;
+        if (cell.mine) {
+          gameOver = true;
+          stopTimer();
+          grid.flat().forEach((x) => { if (x.mine) x.open = true; });
+          bannerEl.textContent = 'Boom! Click New Grid to try again.';
+          bannerEl.style.color = '#f87171';
+          render();
+          return;
+        }
+
+        if (cell.count === 0) {
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              const nr = r + dr;
+              const nc = c + dc;
+              if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                reveal(nr, nc);
+              }
+            }
+          }
+        }
+
+        checkWin();
+        render();
+      }
+
+      function toggleFlag(r, c) {
+        if (gameOver) return;
+        const cell = grid[r][c];
+        if (cell.open) return;
+        cell.flagged = !cell.flagged;
+        render();
+      }
+
+      function checkWin() {
+        const safeClosed = grid.flat().filter((x) => !x.mine && !x.open).length;
+        if (safeClosed === 0) {
+          gameOver = true;
+          stopTimer();
+          bannerEl.textContent = `Grid cleared in ${seconds}s!`;
+          bannerEl.style.color = '#34d399';
+        }
+      }
+
+      function render() {
+        const flaggedCount = grid.flat().filter((x) => x.flagged).length;
+        minesLeftEl.textContent = String(MINES - flaggedCount);
+        boardEl.innerHTML = '';
+
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            const cell = grid[r][c];
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cell';
+
+            if (cell.open) {
+              btn.classList.add('open');
+              if (cell.mine) {
+                btn.classList.add('mine');
+                btn.textContent = '✕';
+              } else if (cell.count > 0) {
+                btn.textContent = String(cell.count);
+                btn.style.color = NUM_COLORS[cell.count];
+              }
+            } else if (cell.flagged) {
+              btn.textContent = '⚑';
+              btn.style.color = '#f59e0b';
+            }
+
+            btn.addEventListener('click', () => {
+              if (flagMode) toggleFlag(r, c);
+              else reveal(r, c);
+            });
+            btn.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              toggleFlag(r, c);
+            });
+
+            boardEl.appendChild(btn);
+          }
+        }
+      }
+
+      flagBtn.addEventListener('click', () => {
+        flagMode = !flagMode;
+        flagBtn.textContent = flagMode ? 'Flag Mode: On' : 'Flag Mode: Off';
+        flagBtn.classList.toggle('active', flagMode);
+      });
+
+      resetBtn.addEventListener('click', initGame);
+      initGame();
+    </script>
+  </body>
+</html>
